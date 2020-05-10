@@ -113,6 +113,9 @@ impl FromBencode for Info {
                 (b"pieces", val) => pieces = Some(val.try_into_bytes()?.to_vec()),
                 (b"length", val) => length = Some(u64::decode_bencode_object(val)?),
                 (b"files", val) => files = Some(Vec::decode_bencode_object(val)?),
+                // TODO: Add other info fields
+                (b"private", _) => {}
+                (b"md5sum", _) => {}
                 (other, _) => {
                     return Err(decoding::Error::unexpected_field(String::from_utf8_lossy(
                         other,

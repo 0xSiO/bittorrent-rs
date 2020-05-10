@@ -55,6 +55,8 @@ impl FromBencode for FileInfo {
             match pair {
                 (b"length", val) => length = Some(u64::decode_bencode_object(val)?),
                 (b"path", val) => path = Some(Vec::decode_bencode_object(val)?),
+                // TODO: Add other file info fields
+                (b"md5sum", _) => {}
                 (other, _) => {
                     return Err(decoding::Error::unexpected_field(String::from_utf8_lossy(
                         other,
