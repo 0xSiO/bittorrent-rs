@@ -51,7 +51,7 @@ impl Info {
 }
 
 impl ToBencode for Info {
-    const MAX_DEPTH: usize = 2;
+    const MAX_DEPTH: usize = 4;
 
     fn encode(&self, encoder: SingleItemEncoder) -> Result<(), encoding::Error> {
         encoder.emit_dict(|mut encoder| {
@@ -70,7 +70,7 @@ impl ToBencode for Info {
 }
 
 impl FromBencode for Info {
-    const EXPECTED_RECURSION_DEPTH: usize = 2;
+    const EXPECTED_RECURSION_DEPTH: usize = 4;
 
     fn decode_bencode_object(object: Object) -> Result<Self, decoding::Error>
     where
@@ -108,10 +108,10 @@ impl FromBencode for Info {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
 
-    fn info() -> Info {
+    pub(crate) fn info() -> Info {
         Info::new(
             String::from("some name"),
             1234,
