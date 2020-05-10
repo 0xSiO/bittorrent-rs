@@ -1,4 +1,5 @@
-use crate::file_info::FileInfo;
+use crate::{error::*, file_info::FileInfo};
+
 use bendy::{
     decoding::{self, FromBencode, Object},
     encoding::{self, SingleItemEncoder, ToBencode},
@@ -39,13 +40,23 @@ impl Info {
         pieces: Vec<u8>,
         length: Option<u64>,
         files: Option<Vec<FileInfo>>,
-    ) -> Self {
-        Self {
-            name,
-            piece_length,
-            pieces,
-            length,
-            files,
+    ) -> crate::error::Result<Self> {
+        if length.is_some() && files.is_some() {
+            Err(Error::InvalidMetadata(String::from(
+                "'length' and 'files' cannot both be defined in info dictionary",
+            )))
+        } else if length.is_none() && files.is_none() {
+            Err(Error::InvalidMetadata(String::from(
+                "one of 'length' or 'files' must be defined in info dictionary",
+            )))
+        } else {
+            Ok(Self {
+                name,
+                piece_length,
+                pieces,
+                length,
+                files,
+            })
         }
     }
 
@@ -73,7 +84,7 @@ impl Info {
 impl ToBencode for Info {
     const MAX_DEPTH: usize = 4;
 
-    fn encode(&self, encoder: SingleItemEncoder) -> Result<(), encoding::Error> {
+    fn encode(&self, encoder: SingleItemEncoder) -> std::result::Result<(), encoding::Error> {
         encoder.emit_dict(|mut encoder| {
             if let Some(files) = &self.files {
                 encoder.emit_pair(b"files", files)?;
@@ -95,7 +106,7 @@ impl ToBencode for Info {
 impl FromBencode for Info {
     const EXPECTED_RECURSION_DEPTH: usize = 4;
 
-    fn decode_bencode_object(object: Object) -> Result<Self, decoding::Error>
+    fn decode_bencode_object(object: Object) -> std::result::Result<Self, decoding::Error>
     where
         Self: Sized,
     {
@@ -129,7 +140,8 @@ impl FromBencode for Info {
             piece_length.ok_or_else(|| decoding::Error::missing_field("piece length"))?;
         let pieces = pieces.ok_or_else(|| decoding::Error::missing_field("pieces"))?;
 
-        Ok(Self::new(name, piece_length, pieces, length, files))
+        Ok(Self::new(name, piece_length, pieces, length, files)
+            .map_err(|err| decoding::Error::malformed_content(err))?)
     }
 }
 
@@ -145,6 +157,7 @@ pub(crate) mod tests {
             Some(321),
             None,
         )
+        .unwrap()
     }
 
     #[test]
