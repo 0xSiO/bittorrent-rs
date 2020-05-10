@@ -17,6 +17,14 @@ impl MetaInfo {
     pub fn new(announce: String, info: Info) -> Self {
         Self { announce, info }
     }
+
+    pub fn announce(&self) -> &str {
+        &self.announce
+    }
+
+    pub fn info(&self) -> &Info {
+        &self.info
+    }
 }
 
 impl ToBencode for MetaInfo {
@@ -46,6 +54,12 @@ impl FromBencode for MetaInfo {
             match pair {
                 (b"announce", val) => announce = Some(String::decode_bencode_object(val)?),
                 (b"info", val) => info = Some(Info::decode_bencode_object(val)?),
+                // TODO: Add other metainfo fields
+                (b"announce-list", _) => {}
+                (b"creation date", _) => {}
+                (b"comment", _) => {}
+                (b"created_by", _) => {}
+                (b"encoding", _) => {}
                 (other, _) => {
                     return Err(decoding::Error::unexpected_field(String::from_utf8_lossy(
                         other,
@@ -75,7 +89,7 @@ mod tests {
     #[test]
     fn encoding_test() {
         assert_eq!(
-            "d8:announce18:http://someurl.com4:infod6:lengthi321e4:name9:some name12:piece_lengthi1234e6:pieces16:blahblahblahblahee",
+            "d8:announce18:http://someurl.com4:infod6:lengthi321e4:name9:some name12:piece lengthi1234e6:pieces16:blahblahblahblahee",
             &String::from_utf8_lossy(&meta_info().to_bencode().unwrap())
         );
     }
@@ -85,7 +99,7 @@ mod tests {
         assert_eq!(
             meta_info(),
             MetaInfo::from_bencode(
-            b"d8:announce18:http://someurl.com4:infod6:lengthi321e4:name9:some name12:piece_lengthi1234e6:pieces16:blahblahblahblahee")
+            b"d8:announce18:http://someurl.com4:infod6:lengthi321e4:name9:some name12:piece lengthi1234e6:pieces16:blahblahblahblahee")
                 .unwrap()
         );
     }

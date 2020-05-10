@@ -8,7 +8,7 @@ use bendy::{
 pub struct Info {
     name: String,
     piece_length: u64,
-    pieces: String,
+    pieces: Vec<u8>,
     length: Option<u64>,
     files: Option<Vec<FileInfo>>,
 }
@@ -23,7 +23,7 @@ impl Info {
     /// which may be truncated. piece length is almost always a power of two,
     /// most commonly 2^18 = 256 KB.
     ///
-    /// `pieces`: A string whose length is a multiple of 20. It is to be
+    /// `pieces`: A byte string whose length is a multiple of 20. It is to be
     /// subdivided into strings of length 20, each of which is the SHA1 hash of
     /// the piece at the corresponding index.
     ///
@@ -36,7 +36,7 @@ impl Info {
     pub fn new(
         name: String,
         piece_length: u64,
-        pieces: String,
+        pieces: Vec<u8>,
         length: Option<u64>,
         files: Option<Vec<FileInfo>>,
     ) -> Self {
@@ -47,6 +47,26 @@ impl Info {
             length,
             files,
         }
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn piece_length(&self) -> u64 {
+        self.piece_length
+    }
+
+    pub fn pieces(&self) -> &[u8] {
+        &self.pieces
+    }
+
+    pub fn length(&self) -> Option<u64> {
+        self.length
+    }
+
+    pub fn files(&self) -> Option<&[FileInfo]> {
+        self.files.as_deref()
     }
 }
 
@@ -62,8 +82,11 @@ impl ToBencode for Info {
                 encoder.emit_pair(b"length", length)?;
             }
             encoder.emit_pair(b"name", &self.name)?;
-            encoder.emit_pair(b"piece_length", self.piece_length)?;
-            encoder.emit_pair(b"pieces", &self.pieces)?;
+            encoder.emit_pair(b"piece length", self.piece_length)?;
+            encoder.emit_pair_with(b"pieces", |encoder| {
+                encoder.emit_bytes(&self.pieces)?;
+                Ok(())
+            })?;
             Ok(())
         })
     }
@@ -86,8 +109,8 @@ impl FromBencode for Info {
         while let Some(pair) = dict.next_pair()? {
             match pair {
                 (b"name", val) => name = Some(String::decode_bencode_object(val)?),
-                (b"piece_length", val) => piece_length = Some(u64::decode_bencode_object(val)?),
-                (b"pieces", val) => pieces = Some(String::decode_bencode_object(val)?),
+                (b"piece length", val) => piece_length = Some(u64::decode_bencode_object(val)?),
+                (b"pieces", val) => pieces = Some(val.try_into_bytes()?.to_vec()),
                 (b"length", val) => length = Some(u64::decode_bencode_object(val)?),
                 (b"files", val) => files = Some(Vec::decode_bencode_object(val)?),
                 (other, _) => {
@@ -100,7 +123,7 @@ impl FromBencode for Info {
 
         let name = name.ok_or_else(|| decoding::Error::missing_field("name"))?;
         let piece_length =
-            piece_length.ok_or_else(|| decoding::Error::missing_field("piece_length"))?;
+            piece_length.ok_or_else(|| decoding::Error::missing_field("piece length"))?;
         let pieces = pieces.ok_or_else(|| decoding::Error::missing_field("pieces"))?;
 
         Ok(Self::new(name, piece_length, pieces, length, files))
@@ -115,7 +138,7 @@ pub(crate) mod tests {
         Info::new(
             String::from("some name"),
             1234,
-            String::from("blahblahblahblah"),
+            b"blahblahblahblah".to_vec(),
             Some(321),
             None,
         )
@@ -124,7 +147,7 @@ pub(crate) mod tests {
     #[test]
     fn encoding_test() {
         assert_eq!(
-            "d6:lengthi321e4:name9:some name12:piece_lengthi1234e6:pieces16:blahblahblahblahe",
+            "d6:lengthi321e4:name9:some name12:piece lengthi1234e6:pieces16:blahblahblahblahe",
             &String::from_utf8_lossy(&info().to_bencode().unwrap())
         );
     }
@@ -134,7 +157,7 @@ pub(crate) mod tests {
         assert_eq!(
             info(),
             Info::from_bencode(
-                b"d6:lengthi321e4:name9:some name12:piece_lengthi1234e6:pieces16:blahblahblahblahe"
+                b"d6:lengthi321e4:name9:some name12:piece lengthi1234e6:pieces16:blahblahblahblahe"
             )
             .unwrap()
         );

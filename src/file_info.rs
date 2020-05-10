@@ -18,6 +18,14 @@ impl FileInfo {
     pub fn new(length: u64, path: Vec<String>) -> Self {
         Self { length, path }
     }
+
+    pub fn length(&self) -> u64 {
+        self.length
+    }
+
+    pub fn path(&self) -> &[String] {
+        &self.path
+    }
 }
 
 impl ToBencode for FileInfo {
