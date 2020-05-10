@@ -80,8 +80,8 @@ mod tests {
     #[test]
     fn encoding_test() {
         assert_eq!(
-            b"d6:lengthi123456e4:pathl7:testing7:another9:final.txtee".to_vec(),
-            file_info().to_bencode().unwrap()
+            "d6:lengthi123456e4:pathl7:testing7:another9:final.txtee",
+            &String::from_utf8_lossy(&file_info().to_bencode().unwrap())
         );
     }
 
