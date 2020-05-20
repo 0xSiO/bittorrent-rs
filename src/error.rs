@@ -7,4 +7,3 @@ pub enum Error {
     #[error("{0}")]
     InvalidMetadata(String),
 }
-

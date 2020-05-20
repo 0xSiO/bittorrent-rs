@@ -40,7 +40,7 @@ impl Info {
         pieces: Vec<u8>,
         length: Option<u64>,
         files: Option<Vec<FileInfo>>,
-    ) -> crate::error::Result<Self> {
+    ) -> Result<Self> {
         if length.is_some() && files.is_some() {
             Err(Error::InvalidMetadata(String::from(
                 "'length' and 'files' cannot both be defined in info dictionary",
