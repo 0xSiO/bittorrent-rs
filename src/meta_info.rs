@@ -13,12 +13,14 @@ pub struct MetaInfo {
     creation_date: Option<DateTime<Utc>>,
     comment: Option<String>,
     created_by: Option<String>,
+    encoding: Option<String>,
 }
 
 impl MetaInfo {
     /// `announce`: The URL of the tracker.
     ///
     /// `info`: Metadata for the download.
+    // TODO: Document other params
     pub fn new(
         announce: String,
         info: Info,
@@ -26,6 +28,7 @@ impl MetaInfo {
         creation_date: Option<DateTime<Utc>>,
         comment: Option<String>,
         created_by: Option<String>,
+        encoding: Option<String>,
     ) -> Self {
         Self {
             announce,
@@ -34,6 +37,7 @@ impl MetaInfo {
             creation_date,
             comment,
             created_by,
+            encoding,
         }
     }
 
@@ -60,6 +64,10 @@ impl MetaInfo {
     pub fn created_by(&self) -> Option<&str> {
         self.created_by.as_deref()
     }
+
+    pub fn encoding(&self) -> Option<&str> {
+        self.encoding.as_deref()
+    }
 }
 
 impl ToBencode for MetaInfo {
@@ -80,6 +88,9 @@ impl ToBencode for MetaInfo {
             if let Some(creation_date) = self.creation_date() {
                 encoder.emit_pair(b"creation date", creation_date.timestamp())?;
             }
+            if let Some(encoding) = self.encoding() {
+                encoder.emit_pair(b"encoding", encoding)?;
+            }
             encoder.emit_pair(b"info", &self.info)?;
             Ok(())
         })
@@ -99,6 +110,7 @@ impl FromBencode for MetaInfo {
         let mut creation_date = None;
         let mut comment = None;
         let mut created_by = None;
+        let mut encoding = None;
         let mut dict = object.try_into_dictionary()?;
 
         while let Some(pair) = dict.next_pair()? {
@@ -118,8 +130,7 @@ impl FromBencode for MetaInfo {
                 }
                 (b"comment", val) => comment = Some(String::decode_bencode_object(val)?),
                 (b"created by", val) => created_by = Some(String::decode_bencode_object(val)?),
-                // TODO: Add other metainfo fields
-                (b"encoding", _) => {}
+                (b"encoding", val) => encoding = Some(String::decode_bencode_object(val)?),
                 (other, _) => {
                     return Err(decoding::Error::unexpected_field(String::from_utf8_lossy(
                         other,
@@ -138,6 +149,7 @@ impl FromBencode for MetaInfo {
             creation_date,
             comment,
             created_by,
+            encoding,
         ))
     }
 }
@@ -160,13 +172,14 @@ mod tests {
             Some(Utc.timestamp(1234567890, 0)),
             Some(String::from("this is a comment")),
             Some(String::from("author goes here")),
+            Some(String::from("UTF-8")),
         )
     }
 
     #[test]
     fn encoding_test() {
         assert_eq!(
-            "d8:announce18:http://someurl.com13:announce-listll18:http://primary.url25:http://second-primary.urlel17:http://backup.urlee7:comment17:this is a comment10:created by16:author goes here13:creation datei1234567890e4:infod6:lengthi321e4:name9:some name12:piece lengthi1234e6:pieces16:blahblahblahblahee",
+            "d8:announce18:http://someurl.com13:announce-listll18:http://primary.url25:http://second-primary.urlel17:http://backup.urlee7:comment17:this is a comment10:created by16:author goes here13:creation datei1234567890e8:encoding5:UTF-84:infod6:lengthi321e4:name9:some name12:piece lengthi1234e6:pieces16:blahblahblahblahee",
             &String::from_utf8_lossy(&meta_info().to_bencode().unwrap())
         );
     }
@@ -176,7 +189,7 @@ mod tests {
         assert_eq!(
             meta_info(),
             MetaInfo::from_bencode(
-                b"d8:announce18:http://someurl.com13:announce-listll18:http://primary.url25:http://second-primary.urlel17:http://backup.urlee7:comment17:this is a comment10:created by16:author goes here13:creation datei1234567890e4:infod6:lengthi321e4:name9:some name12:piece lengthi1234e6:pieces16:blahblahblahblahee"
+                b"d8:announce18:http://someurl.com13:announce-listll18:http://primary.url25:http://second-primary.urlel17:http://backup.urlee7:comment17:this is a comment10:created by16:author goes here13:creation datei1234567890e8:encoding5:UTF-84:infod6:lengthi321e4:name9:some name12:piece lengthi1234e6:pieces16:blahblahblahblahee"
                 ).unwrap()
         );
     }
