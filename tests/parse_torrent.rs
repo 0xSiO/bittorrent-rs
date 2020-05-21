@@ -22,6 +22,7 @@ fn parse_torrent() {
     assert!(info.length().is_none());
     assert!(info.files().is_some());
     assert!(info.private().is_none());
+    assert!(info.md5sum().is_none());
 
     let files = info.files().unwrap();
     assert_eq!(2, files.len());

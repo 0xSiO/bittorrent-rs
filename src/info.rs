@@ -13,6 +13,7 @@ pub struct Info {
     length: Option<u64>,
     files: Option<Vec<FileInfo>>,
     private: Option<bool>,
+    md5sum: Option<String>,
 }
 
 impl Info {
@@ -35,6 +36,7 @@ impl Info {
     ///
     /// `files`: If present, contains the information of all files for the
     /// download.
+    // TODO: Document other params
     pub fn new(
         name: String,
         piece_length: u64,
@@ -42,6 +44,7 @@ impl Info {
         length: Option<u64>,
         files: Option<Vec<FileInfo>>,
         private: Option<bool>,
+        md5sum: Option<String>,
     ) -> Result<Self> {
         if length.is_some() && files.is_some() {
             Err(Error::InvalidMetadata(String::from(
@@ -59,6 +62,7 @@ impl Info {
                 length,
                 files,
                 private,
+                md5sum,
             })
         }
     }
@@ -86,6 +90,10 @@ impl Info {
     pub fn private(&self) -> Option<bool> {
         self.private
     }
+
+    pub fn md5sum(&self) -> Option<&str> {
+        self.md5sum.as_deref()
+    }
 }
 
 impl ToBencode for Info {
@@ -93,16 +101,19 @@ impl ToBencode for Info {
 
     fn encode(&self, encoder: SingleItemEncoder) -> std::result::Result<(), encoding::Error> {
         encoder.emit_dict(|mut encoder| {
-            if let Some(files) = &self.files {
+            if let Some(files) = self.files() {
                 encoder.emit_pair(b"files", files)?;
             }
-            if let Some(length) = self.length {
+            if let Some(length) = self.length() {
                 encoder.emit_pair(b"length", length)?;
             }
-            encoder.emit_pair(b"name", &self.name)?;
-            encoder.emit_pair(b"piece length", self.piece_length)?;
+            if let Some(md5sum) = self.md5sum() {
+                encoder.emit_pair(b"md5sum", md5sum)?;
+            }
+            encoder.emit_pair(b"name", self.name())?;
+            encoder.emit_pair(b"piece length", self.piece_length())?;
             encoder.emit_pair_with(b"pieces", |encoder| {
-                encoder.emit_bytes(&self.pieces)?;
+                encoder.emit_bytes(self.pieces())?;
                 Ok(())
             })?;
             if let Some(private) = self.private() {
@@ -126,6 +137,7 @@ impl FromBencode for Info {
         let mut length = None;
         let mut files = None;
         let mut private = None;
+        let mut md5sum = None;
         let mut dict = object.try_into_dictionary()?;
 
         while let Some(pair) = dict.next_pair()? {
@@ -136,8 +148,7 @@ impl FromBencode for Info {
                 (b"length", val) => length = Some(u64::decode_bencode_object(val)?),
                 (b"files", val) => files = Some(Vec::decode_bencode_object(val)?),
                 (b"private", val) => private = Some(u8::decode_bencode_object(val)? == 1),
-                // TODO: Add other info fields
-                (b"md5sum", _) => {}
+                (b"md5sum", val) => md5sum = Some(String::decode_bencode_object(val)?),
                 (other, _) => {
                     return Err(decoding::Error::unexpected_field(String::from_utf8_lossy(
                         other,
@@ -152,7 +163,7 @@ impl FromBencode for Info {
         let pieces = pieces.ok_or_else(|| decoding::Error::missing_field("pieces"))?;
 
         Ok(
-            Self::new(name, piece_length, pieces, length, files, private)
+            Self::new(name, piece_length, pieces, length, files, private, md5sum)
                 .map_err(|err| decoding::Error::malformed_content(err))?,
         )
     }
@@ -170,6 +181,7 @@ pub(crate) mod tests {
             Some(321),
             None,
             Some(false),
+            None,
         )
         .unwrap()
     }

@@ -33,8 +33,8 @@ impl ToBencode for FileInfo {
 
     fn encode(&self, encoder: SingleItemEncoder) -> Result<(), encoding::Error> {
         encoder.emit_dict(|mut encoder| {
-            encoder.emit_pair(b"length", &self.length)?;
-            encoder.emit_pair(b"path", &self.path)?;
+            encoder.emit_pair(b"length", self.length())?;
+            encoder.emit_pair(b"path", self.path())?;
             Ok(())
         })
     }

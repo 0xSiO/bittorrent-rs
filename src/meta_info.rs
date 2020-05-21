@@ -91,7 +91,7 @@ impl ToBencode for MetaInfo {
             if let Some(encoding) = self.encoding() {
                 encoder.emit_pair(b"encoding", encoding)?;
             }
-            encoder.emit_pair(b"info", &self.info)?;
+            encoder.emit_pair(b"info", self.info())?;
             Ok(())
         })
     }
