@@ -7,6 +7,7 @@ use bendy::{
 pub struct FileInfo {
     length: u64,
     path: Vec<String>,
+    md5sum: Option<String>,
 }
 
 impl FileInfo {
@@ -15,8 +16,12 @@ impl FileInfo {
     /// `path`: A `Vec` of UTF-8 encoded strings corresponding to subdirectory
     /// names, the last of which is the actual file name (a zero length list
     /// is an error case).
-    pub fn new(length: u64, path: Vec<String>) -> Self {
-        Self { length, path }
+    pub fn new(length: u64, path: Vec<String>, md5sum: Option<String>) -> Self {
+        Self {
+            length,
+            path,
+            md5sum,
+        }
     }
 
     pub fn length(&self) -> u64 {
@@ -26,6 +31,10 @@ impl FileInfo {
     pub fn path(&self) -> &[String] {
         &self.path
     }
+
+    pub fn md5sum(&self) -> Option<&str> {
+        self.md5sum.as_deref()
+    }
 }
 
 impl ToBencode for FileInfo {
@@ -34,6 +43,9 @@ impl ToBencode for FileInfo {
     fn encode(&self, encoder: SingleItemEncoder) -> Result<(), encoding::Error> {
         encoder.emit_dict(|mut encoder| {
             encoder.emit_pair(b"length", self.length())?;
+            if let Some(md5sum) = self.md5sum() {
+                encoder.emit_pair(b"md5sum", md5sum)?;
+            }
             encoder.emit_pair(b"path", self.path())?;
             Ok(())
         })
@@ -49,14 +61,14 @@ impl FromBencode for FileInfo {
     {
         let mut length = None;
         let mut path = None;
+        let mut md5sum = None;
         let mut dict = object.try_into_dictionary()?;
 
         while let Some(pair) = dict.next_pair()? {
             match pair {
                 (b"length", val) => length = Some(u64::decode_bencode_object(val)?),
                 (b"path", val) => path = Some(Vec::decode_bencode_object(val)?),
-                // TODO: Add other file info fields
-                (b"md5sum", _) => {}
+                (b"md5sum", val) => md5sum = Some(String::decode_bencode_object(val)?),
                 (other, _) => {
                     return Err(decoding::Error::unexpected_field(String::from_utf8_lossy(
                         other,
@@ -68,7 +80,7 @@ impl FromBencode for FileInfo {
         let length = length.ok_or_else(|| decoding::Error::missing_field("length"))?;
         let path = path.ok_or_else(|| decoding::Error::missing_field("path"))?;
 
-        Ok(Self::new(length, path))
+        Ok(Self::new(length, path, md5sum))
     }
 }
 
@@ -84,6 +96,7 @@ mod tests {
                 String::from("another"),
                 String::from("final.txt"),
             ],
+            None,
         )
     }
 

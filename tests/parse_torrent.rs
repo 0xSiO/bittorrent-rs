@@ -36,4 +36,5 @@ fn parse_torrent() {
         &[String::from("Fedora-Spins-32-1.6-x86_64-CHECKSUM")],
         files[1].path()
     );
+    assert!(files[0].md5sum().is_none());
 }
