@@ -11,16 +11,17 @@ fn parse_torrent() {
     );
     assert!(meta_info.announce_list().is_none());
     assert_eq!(1587996219, meta_info.creation_date().unwrap().timestamp());
-    assert_eq!(None, meta_info.comment());
-    assert_eq!(None, meta_info.created_by());
-    assert_eq!(None, meta_info.encoding());
+    assert!(meta_info.comment().is_none());
+    assert!(meta_info.created_by().is_none());
+    assert!(meta_info.encoding().is_none());
 
     let info = meta_info.info();
     assert_eq!("Fedora-SoaS-Live-x86_64-32", info.name());
     assert_eq!(2_u64.pow(18), info.piece_length());
     assert_eq!(84_680, info.pieces().len());
-    assert_eq!(None, info.length());
+    assert!(info.length().is_none());
     assert!(info.files().is_some());
+    assert!(info.private().is_none());
 
     let files = info.files().unwrap();
     assert_eq!(2, files.len());

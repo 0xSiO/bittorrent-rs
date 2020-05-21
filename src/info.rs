@@ -12,6 +12,7 @@ pub struct Info {
     pieces: Vec<u8>,
     length: Option<u64>,
     files: Option<Vec<FileInfo>>,
+    private: Option<bool>,
 }
 
 impl Info {
@@ -40,6 +41,7 @@ impl Info {
         pieces: Vec<u8>,
         length: Option<u64>,
         files: Option<Vec<FileInfo>>,
+        private: Option<bool>,
     ) -> Result<Self> {
         if length.is_some() && files.is_some() {
             Err(Error::InvalidMetadata(String::from(
@@ -56,6 +58,7 @@ impl Info {
                 pieces,
                 length,
                 files,
+                private,
             })
         }
     }
@@ -79,6 +82,10 @@ impl Info {
     pub fn files(&self) -> Option<&[FileInfo]> {
         self.files.as_deref()
     }
+
+    pub fn private(&self) -> Option<bool> {
+        self.private
+    }
 }
 
 impl ToBencode for Info {
@@ -98,6 +105,9 @@ impl ToBencode for Info {
                 encoder.emit_bytes(&self.pieces)?;
                 Ok(())
             })?;
+            if let Some(private) = self.private() {
+                encoder.emit_pair(b"private", if private { 1 } else { 0 })?;
+            }
             Ok(())
         })
     }
@@ -115,6 +125,7 @@ impl FromBencode for Info {
         let mut pieces = None;
         let mut length = None;
         let mut files = None;
+        let mut private = None;
         let mut dict = object.try_into_dictionary()?;
 
         while let Some(pair) = dict.next_pair()? {
@@ -124,8 +135,8 @@ impl FromBencode for Info {
                 (b"pieces", val) => pieces = Some(val.try_into_bytes()?.to_vec()),
                 (b"length", val) => length = Some(u64::decode_bencode_object(val)?),
                 (b"files", val) => files = Some(Vec::decode_bencode_object(val)?),
+                (b"private", val) => private = Some(u8::decode_bencode_object(val)? == 1),
                 // TODO: Add other info fields
-                (b"private", _) => {}
                 (b"md5sum", _) => {}
                 (other, _) => {
                     return Err(decoding::Error::unexpected_field(String::from_utf8_lossy(
@@ -140,8 +151,10 @@ impl FromBencode for Info {
             piece_length.ok_or_else(|| decoding::Error::missing_field("piece length"))?;
         let pieces = pieces.ok_or_else(|| decoding::Error::missing_field("pieces"))?;
 
-        Ok(Self::new(name, piece_length, pieces, length, files)
-            .map_err(|err| decoding::Error::malformed_content(err))?)
+        Ok(
+            Self::new(name, piece_length, pieces, length, files, private)
+                .map_err(|err| decoding::Error::malformed_content(err))?,
+        )
     }
 }
 
@@ -156,6 +169,7 @@ pub(crate) mod tests {
             b"blahblahblahblah".to_vec(),
             Some(321),
             None,
+            Some(false),
         )
         .unwrap()
     }
@@ -163,7 +177,7 @@ pub(crate) mod tests {
     #[test]
     fn encoding_test() {
         assert_eq!(
-            "d6:lengthi321e4:name9:some name12:piece lengthi1234e6:pieces16:blahblahblahblahe",
+            "d6:lengthi321e4:name9:some name12:piece lengthi1234e6:pieces16:blahblahblahblah7:privatei0ee",
             &String::from_utf8_lossy(&info().to_bencode().unwrap())
         );
     }
@@ -173,7 +187,7 @@ pub(crate) mod tests {
         assert_eq!(
             info(),
             Info::from_bencode(
-                b"d6:lengthi321e4:name9:some name12:piece lengthi1234e6:pieces16:blahblahblahblahe"
+                b"d6:lengthi321e4:name9:some name12:piece lengthi1234e6:pieces16:blahblahblahblah7:privatei0ee"
             )
             .unwrap()
         );
