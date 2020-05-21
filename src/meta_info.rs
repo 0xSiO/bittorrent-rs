@@ -3,14 +3,14 @@ use bendy::{
     decoding::{self, FromBencode, Object},
     encoding::{self, SingleItemEncoder, ToBencode},
 };
-use chrono::NaiveDateTime;
+use chrono::{DateTime, TimeZone, Utc};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct MetaInfo {
     announce: String,
     info: Info,
     announce_list: Option<Vec<Vec<String>>>,
-    creation_date: Option<NaiveDateTime>,
+    creation_date: Option<DateTime<Utc>>,
 }
 
 impl MetaInfo {
@@ -21,7 +21,7 @@ impl MetaInfo {
         announce: String,
         info: Info,
         announce_list: Option<Vec<Vec<String>>>,
-        creation_date: Option<NaiveDateTime>,
+        creation_date: Option<DateTime<Utc>>,
     ) -> Self {
         Self {
             announce,
@@ -43,8 +43,8 @@ impl MetaInfo {
         self.announce_list.as_ref()
     }
 
-    pub fn creation_date(&self) -> Option<NaiveDateTime> {
-        self.creation_date
+    pub fn creation_date(&self) -> Option<&DateTime<Utc>> {
+        self.creation_date.as_ref()
     }
 }
 
@@ -53,12 +53,12 @@ impl ToBencode for MetaInfo {
 
     fn encode(&self, encoder: SingleItemEncoder) -> Result<(), encoding::Error> {
         encoder.emit_dict(|mut encoder| {
-            encoder.emit_pair(b"announce", &self.announce)?;
-            if let Some(announce_list) = &self.announce_list {
+            encoder.emit_pair(b"announce", self.announce())?;
+            if let Some(announce_list) = self.announce_list() {
                 encoder.emit_pair(b"announce-list", announce_list)?;
             }
-            if let Some(date_time) = &self.creation_date {
-                encoder.emit_pair(b"creation date", date_time.timestamp())?;
+            if let Some(creation_date) = self.creation_date() {
+                encoder.emit_pair(b"creation date", creation_date.timestamp())?;
             }
             encoder.emit_pair(b"info", &self.info)?;
             Ok(())
@@ -86,14 +86,13 @@ impl FromBencode for MetaInfo {
                 (b"announce-list", val) => announce_list = Some(Vec::decode_bencode_object(val)?),
                 (b"creation date", val) => {
                     let seconds = i64::decode_bencode_object(val)?;
-                    creation_date = Some(NaiveDateTime::from_timestamp_opt(seconds, 0).ok_or_else(
-                        || {
+                    creation_date =
+                        Some(Utc.timestamp_opt(seconds, 0).single().ok_or_else(|| {
                             decoding::Error::malformed_content(Error::InvalidMetadata(format!(
                                 "invalid creation date timestamp: {}",
                                 seconds
                             )))
-                        },
-                    )?)
+                        })?)
                 }
                 // TODO: Add other metainfo fields
                 (b"comment", _) => {}
@@ -129,7 +128,7 @@ mod tests {
                 ],
                 vec![String::from("http://backup.url")],
             ]),
-            Some(NaiveDateTime::from_timestamp(1234567890, 0)),
+            Some(Utc.timestamp(1234567890, 0)),
         )
     }
 
