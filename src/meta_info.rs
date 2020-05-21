@@ -12,6 +12,7 @@ pub struct MetaInfo {
     announce_list: Option<Vec<Vec<String>>>,
     creation_date: Option<DateTime<Utc>>,
     comment: Option<String>,
+    created_by: Option<String>,
 }
 
 impl MetaInfo {
@@ -24,6 +25,7 @@ impl MetaInfo {
         announce_list: Option<Vec<Vec<String>>>,
         creation_date: Option<DateTime<Utc>>,
         comment: Option<String>,
+        created_by: Option<String>,
     ) -> Self {
         Self {
             announce,
@@ -31,6 +33,7 @@ impl MetaInfo {
             announce_list,
             creation_date,
             comment,
+            created_by,
         }
     }
 
@@ -53,6 +56,10 @@ impl MetaInfo {
     pub fn comment(&self) -> Option<&str> {
         self.comment.as_deref()
     }
+
+    pub fn created_by(&self) -> Option<&str> {
+        self.created_by.as_deref()
+    }
 }
 
 impl ToBencode for MetaInfo {
@@ -66,6 +73,9 @@ impl ToBencode for MetaInfo {
             }
             if let Some(comment) = self.comment() {
                 encoder.emit_pair(b"comment", comment)?;
+            }
+            if let Some(created_by) = self.created_by() {
+                encoder.emit_pair(b"created by", created_by)?;
             }
             if let Some(creation_date) = self.creation_date() {
                 encoder.emit_pair(b"creation date", creation_date.timestamp())?;
@@ -88,6 +98,7 @@ impl FromBencode for MetaInfo {
         let mut announce_list = None;
         let mut creation_date = None;
         let mut comment = None;
+        let mut created_by = None;
         let mut dict = object.try_into_dictionary()?;
 
         while let Some(pair) = dict.next_pair()? {
@@ -106,8 +117,8 @@ impl FromBencode for MetaInfo {
                         })?)
                 }
                 (b"comment", val) => comment = Some(String::decode_bencode_object(val)?),
+                (b"created by", val) => created_by = Some(String::decode_bencode_object(val)?),
                 // TODO: Add other metainfo fields
-                (b"created_by", _) => {}
                 (b"encoding", _) => {}
                 (other, _) => {
                     return Err(decoding::Error::unexpected_field(String::from_utf8_lossy(
@@ -126,6 +137,7 @@ impl FromBencode for MetaInfo {
             announce_list,
             creation_date,
             comment,
+            created_by,
         ))
     }
 }
@@ -147,13 +159,14 @@ mod tests {
             ]),
             Some(Utc.timestamp(1234567890, 0)),
             Some(String::from("this is a comment")),
+            Some(String::from("author goes here")),
         )
     }
 
     #[test]
     fn encoding_test() {
         assert_eq!(
-            "d8:announce18:http://someurl.com13:announce-listll18:http://primary.url25:http://second-primary.urlel17:http://backup.urlee7:comment17:this is a comment13:creation datei1234567890e4:infod6:lengthi321e4:name9:some name12:piece lengthi1234e6:pieces16:blahblahblahblahee",
+            "d8:announce18:http://someurl.com13:announce-listll18:http://primary.url25:http://second-primary.urlel17:http://backup.urlee7:comment17:this is a comment10:created by16:author goes here13:creation datei1234567890e4:infod6:lengthi321e4:name9:some name12:piece lengthi1234e6:pieces16:blahblahblahblahee",
             &String::from_utf8_lossy(&meta_info().to_bencode().unwrap())
         );
     }
@@ -163,7 +176,7 @@ mod tests {
         assert_eq!(
             meta_info(),
             MetaInfo::from_bencode(
-                b"d8:announce18:http://someurl.com13:announce-listll18:http://primary.url25:http://second-primary.urlel17:http://backup.urlee7:comment17:this is a comment13:creation datei1234567890e4:infod6:lengthi321e4:name9:some name12:piece lengthi1234e6:pieces16:blahblahblahblahee"
+                b"d8:announce18:http://someurl.com13:announce-listll18:http://primary.url25:http://second-primary.urlel17:http://backup.urlee7:comment17:this is a comment10:created by16:author goes here13:creation datei1234567890e4:infod6:lengthi321e4:name9:some name12:piece lengthi1234e6:pieces16:blahblahblahblahee"
                 ).unwrap()
         );
     }

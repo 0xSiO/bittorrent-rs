@@ -12,6 +12,7 @@ fn parse_torrent() {
     assert!(meta_info.announce_list().is_none());
     assert_eq!(1587996219, meta_info.creation_date().unwrap().timestamp());
     assert_eq!(None, meta_info.comment());
+    assert_eq!(None, meta_info.created_by());
 
     let info = meta_info.info();
     assert_eq!("Fedora-SoaS-Live-x86_64-32", info.name());
