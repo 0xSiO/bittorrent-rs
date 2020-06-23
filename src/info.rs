@@ -203,5 +203,10 @@ pub(crate) mod tests {
             )
             .unwrap()
         );
+        // missing a field
+        assert!(Info::from_bencode(
+            b"d4:name9:some name12:piece lengthi1234e6:pieces16:blahblahblahblah7:privatei0ee"
+        )
+        .is_err());
     }
 }
