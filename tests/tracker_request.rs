@@ -1,7 +1,10 @@
 use std::collections::HashMap;
 
 use bendy::{decoding::FromBencode, encoding::ToBencode};
-use bittorrent::{tracker::Request, MetaInfo};
+use bittorrent::{
+    tracker::{Event, Request},
+    MetaInfo,
+};
 use percent_encoding::{percent_encode, NON_ALPHANUMERIC};
 use reqwest::StatusCode;
 use sha1::Sha1;
@@ -15,13 +18,13 @@ async fn tracker_request() {
     let client = reqwest::Client::new();
     let request = Request::new(
         percent_encode(&info_hash, NON_ALPHANUMERIC).to_string(),
-        String::from("some-random-peer-id"),
+        percent_encode(b"abcdefghijklmnopqrst", NON_ALPHANUMERIC).to_string(),
         None,
         6881,
         0,
         0,
-        1109803008,
-        None,
+        info.files().unwrap()[0].length(),
+        Some(Event::Started),
         true,
         None,
         None,

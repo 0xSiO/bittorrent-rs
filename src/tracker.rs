@@ -89,17 +89,9 @@ impl From<Request> for HashMap<&str, String> {
         if let Some(event) = request.event {
             params.insert("event", event.to_string());
         }
-        if request.compact {
-            params.insert("compact", String::from("1"));
-        } else {
-            params.insert("compact", String::from("0"));
-        }
+        params.insert("compact", (request.compact as u8).to_string());
         if let Some(no_peer_id) = request.no_peer_id {
-            if no_peer_id {
-                params.insert("no_peer_id", String::from("1"));
-            } else {
-                params.insert("no_peer_id", String::from("0"));
-            }
+            params.insert("no_peer_id", (no_peer_id as u8).to_string());
         }
         if let Some(numwant) = request.numwant {
             params.insert("numwant", numwant.to_string());
