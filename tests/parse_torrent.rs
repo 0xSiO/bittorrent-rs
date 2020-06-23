@@ -1,5 +1,5 @@
 use bendy::decoding::FromBencode;
-use bittorrent::meta_info::MetaInfo;
+use bittorrent::MetaInfo;
 
 #[test]
 fn parse_torrent() {

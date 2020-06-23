@@ -1,4 +1,9 @@
 pub mod error;
-pub mod file_info;
-pub mod info;
-pub mod meta_info;
+mod file_info;
+mod info;
+mod meta_info;
+pub mod tracker;
+
+pub use file_info::FileInfo;
+pub use info::Info;
+pub use meta_info::MetaInfo;
