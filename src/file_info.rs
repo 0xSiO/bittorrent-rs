@@ -115,5 +115,7 @@ mod tests {
             FileInfo::from_bencode(b"d6:lengthi123456e4:pathl7:testing7:another9:final.txtee")
                 .unwrap()
         );
+        // missing a field
+        assert!(FileInfo::from_bencode(b"d4:pathl7:testing7:another9:final.txtee").is_err());
     }
 }
