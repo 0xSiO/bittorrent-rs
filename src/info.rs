@@ -1,9 +1,9 @@
-use crate::{error::*, file_info::FileInfo};
-
 use bendy::{
     decoding::{self, FromBencode, Object},
     encoding::{self, SingleItemEncoder, ToBencode},
 };
+
+use crate::{error::*, file_info::FileInfo};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Info {

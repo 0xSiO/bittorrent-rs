@@ -1,9 +1,10 @@
-use crate::{error::Error, info::Info};
 use bendy::{
     decoding::{self, FromBencode, Object},
     encoding::{self, SingleItemEncoder, ToBencode},
 };
 use chrono::{DateTime, TimeZone, Utc};
+
+use crate::{error::Error, info::Info};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct MetaInfo {
@@ -20,7 +21,17 @@ impl MetaInfo {
     /// `announce`: The URL of the tracker.
     ///
     /// `info`: Metadata for the download.
-    // TODO: Document other params
+    ///
+    /// `announce_list`: a list of lists of URLs, containing a list of tiers of announces
+    ///
+    /// `creation_date`: the creation time of the torrent, in standard UNIX epoch format
+    ///
+    /// `comment`: free-form textual comments of the author
+    ///
+    /// `created_by`: name and version of the program used to create the torrent
+    ///
+    /// `encoding`: the string encoding format used to generate the `pieces` part of the
+    /// `info` dictionary
     pub fn new(
         announce: String,
         info: Info,
