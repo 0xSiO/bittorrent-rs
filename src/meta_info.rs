@@ -18,9 +18,9 @@ pub struct MetaInfo {
 }
 
 impl MetaInfo {
-    /// `announce`: The URL of the tracker.
+    /// `announce`: the URL of the tracker.
     ///
-    /// `info`: Metadata for the download.
+    /// `info`: metadata for the download.
     ///
     /// `announce_list`: a list of lists of URLs, containing a list of tiers of announces
     ///

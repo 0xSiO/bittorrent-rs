@@ -17,26 +17,27 @@ pub struct Info {
 }
 
 impl Info {
-    /// `name`: The suggested name to save the file (or directory) as. It is
-    /// purely advisory.
+    /// `name`: the suggested name to save the file (or directory) as. It is purely advisory.
     ///
-    /// `piece_length`: The number of bytes in each piece the file is split
-    /// into. For the purposes of transfer, files are split into fixed-size
-    /// pieces which are all the same length except for possibly the last one,
-    /// which may be truncated. piece length is almost always a power of two,
-    /// most commonly 2^18 = 256 KB.
+    /// `piece_length`: the number of bytes in each piece the file is split into. For the
+    /// purposes of transfer, files are split into fixed-size pieces which are all the same
+    /// length except for possibly the last one, which may be truncated. piece length is almost
+    /// always a power of two, most commonly 2^18 = 256 KB.
     ///
-    /// `pieces`: A byte string whose length is a multiple of 20. It is to be
-    /// subdivided into strings of length 20, each of which is the SHA1 hash of
-    /// the piece at the corresponding index.
+    /// `pieces`: a byte string whose length is a multiple of 20. It is to be subdivided into
+    /// strings of length 20, each of which is the SHA1 hash of the piece at the corresponding
+    /// index.
     ///
-    /// `length`: If present, the download represents a single file, and this
-    /// parameter maps to the length of the file in bytes. If not present, the
-    /// download represents a set of files which go in a directory structure.
+    /// `length`: if present, the download represents a single file, and this parameter maps to
+    /// the length of the file in bytes. If not present, the download represents a set of files
+    /// which go in a directory structure.
     ///
-    /// `files`: If present, contains the information of all files for the
-    /// download.
-    // TODO: Document other params
+    /// `files`: if present, contains the information of all files for the download.
+    ///
+    /// `private`: if true, the client will only use the specified trackers to obtain peers. if
+    /// false, the client may obtain peers from other sources, like PEX or DHT.
+    ///
+    /// `md5sum`: if in single-file mode, this is the MD5 checksum of the file.
     pub fn new(
         name: String,
         piece_length: u64,

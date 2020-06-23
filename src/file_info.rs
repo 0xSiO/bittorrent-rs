@@ -11,11 +11,12 @@ pub struct FileInfo {
 }
 
 impl FileInfo {
-    /// `length`: The length of the file, in bytes.
+    /// `length`: the length of the file, in bytes.
     ///
-    /// `path`: A `Vec` of UTF-8 encoded strings corresponding to subdirectory
-    /// names, the last of which is the actual file name (a zero length list
-    /// is an error case).
+    /// `path`: a `Vec` of UTF-8 encoded strings corresponding to subdirectory names, the last
+    /// of which is the actual file name (a zero length list is an error case).
+    ///
+    /// `md5sum`: the MD5 checksum of the file.
     pub fn new(length: u64, path: Vec<String>, md5sum: Option<String>) -> Self {
         Self {
             length,
