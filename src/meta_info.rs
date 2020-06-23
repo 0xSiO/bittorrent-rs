@@ -192,5 +192,11 @@ mod tests {
                 b"d8:announce18:http://someurl.com13:announce-listll18:http://primary.url25:http://second-primary.urlel17:http://backup.urlee7:comment17:this is a comment10:created by16:author goes here13:creation datei1234567890e8:encoding5:UTF-84:infod6:lengthi321e4:name9:some name12:piece lengthi1234e6:pieces16:blahblahblahblah7:privatei0eee"
                 ).unwrap()
         );
+        // missing 'announce' field
+        assert!(
+            MetaInfo::from_bencode(
+                b"d13:announce-listll18:http://primary.url25:http://second-primary.urlel17:http://backup.urlee7:comment17:this is a comment10:created by16:author goes here13:creation datei1234567890e8:encoding5:UTF-84:infod6:lengthi321e4:name9:some name12:piece lengthi1234e6:pieces16:blahblahblahblah7:privatei0eee"
+                ).is_err()
+        );
     }
 }
