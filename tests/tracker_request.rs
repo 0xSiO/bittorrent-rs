@@ -12,11 +12,15 @@ async fn tracker_request() {
     let file_contents = std::fs::read("tests/fixtures/test.torrent").unwrap();
     let meta_info = MetaInfo::from_bencode(&file_contents).unwrap();
     let info = meta_info.info();
-    let info_hash = Sha1::from(&info.to_bencode().unwrap()).digest().bytes();
+    let info_hash = Sha1::from(&info.to_bencode().unwrap()).digest();
+    assert_eq!(
+        &info_hash.to_string(),
+        "80bbb5c4986d3dd4c52f8dab517451203c4fab1d"
+    );
     let client = reqwest::Client::new();
     let request = Request::new(
         Url::parse(meta_info.announce()).unwrap(),
-        percent_encode(&info_hash, NON_ALPHANUMERIC).to_string(),
+        percent_encode(&info_hash.bytes(), NON_ALPHANUMERIC).to_string(),
         percent_encode(b"abcdefghijklmnopqrst", NON_ALPHANUMERIC).to_string(),
         None,
         6881,
