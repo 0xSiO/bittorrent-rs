@@ -31,13 +31,25 @@ async fn tracker_request() {
         None,
         None,
     );
-    let response = client
+
+    // This is a hack. reqwest always percent-encodes query parameters, so our percent-encoded
+    // info_hash will be encoded a second time, which is bad. I couldn't find a way to just put
+    // encoded bytes in the query parameters, so I modify the URL directly.
+    let mut params = HashMap::from(request);
+    let hash = params.remove("info_hash").unwrap();
+    let mut http_req = client
         .get(meta_info.announce())
-        .query(&HashMap::from(request))
-        .send()
-        .await
+        .query(&params)
+        .build()
         .unwrap();
+    let url = http_req.url_mut();
+    url.set_query(Some(&format!(
+        "info_hash={}&{}",
+        hash,
+        url.query().unwrap()
+    )));
+    let response = client.execute(http_req).await.unwrap();
 
     // TODO: This returns a 400 for now; still trying to get it working
-    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    assert_eq!(response.status(), StatusCode::OK);
 }
