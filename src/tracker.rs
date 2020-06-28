@@ -3,6 +3,8 @@ use std::{
     net::IpAddr,
 };
 
+use bendy::decoding::{self, FromBencode, ListDecoder, Object};
+use either::Either;
 use reqwest::Url;
 
 #[derive(Debug, PartialEq, Eq)]
@@ -117,5 +119,119 @@ impl From<Request> for Url {
         // Drop mutable reference to announce_url so we can move it
         drop(query_pairs);
         request.announce_url
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct Response {
+    failure_reason: Option<String>,
+    warning_message: Option<String>,
+    interval: Option<u64>,
+    min_interval: Option<u64>,
+    tracker_id: Option<String>,
+    complete: Option<u64>,
+    incomplete: Option<u64>,
+    peers: Option<Vec<Peer>>,
+}
+
+impl Response {
+    pub fn new(
+        failure_reason: Option<String>,
+        warning_message: Option<String>,
+        interval: Option<u64>,
+        min_interval: Option<u64>,
+        tracker_id: Option<String>,
+        complete: Option<u64>,
+        incomplete: Option<u64>,
+        peers: Option<Vec<Peer>>,
+    ) -> Self {
+        Self {
+            failure_reason,
+            warning_message,
+            interval,
+            min_interval,
+            tracker_id,
+            complete,
+            incomplete,
+            peers,
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct Peer {
+    peer_id: Option<String>,
+    ip: IpAddr,
+    port: u16,
+}
+
+impl FromBencode for Response {
+    const EXPECTED_RECURSION_DEPTH: usize = 2;
+
+    fn decode_bencode_object(object: Object) -> Result<Self, decoding::Error>
+    where
+        Self: Sized,
+    {
+        let mut failure_reason = None;
+        let mut warning_message = None;
+        let mut interval = None;
+        let mut min_interval = None;
+        let mut tracker_id = None;
+        let mut complete = None;
+        let mut incomplete = None;
+        let mut peers = None;
+        let mut dict = object.try_into_dictionary()?;
+
+        while let Some(pair) = dict.next_pair()? {
+            match pair {
+                (b"failure reason", val) => {
+                    failure_reason = Some(String::decode_bencode_object(val)?)
+                }
+                (b"warning message", val) => {
+                    warning_message = Some(String::decode_bencode_object(val)?)
+                }
+                (b"interval", val) => interval = Some(u64::decode_bencode_object(val)?),
+                (b"min interval", val) => min_interval = Some(u64::decode_bencode_object(val)?),
+                (b"tracker id", val) => tracker_id = Some(String::decode_bencode_object(val)?),
+                (b"complete", val) => complete = Some(u64::decode_bencode_object(val)?),
+                (b"incomplete", val) => incomplete = Some(u64::decode_bencode_object(val)?),
+                (b"peers", val) => {
+                    // Peer list is either a list of dictionaries or a byte string
+                    let peers_obj: Either<ListDecoder, &[u8]> =
+                        Either::from(val.bytes_or_else(|obj| Err(obj.try_into_list().unwrap())));
+                    let peer_list = Vec::new();
+                    match peers_obj {
+                        Either::Left(mut list) => {
+                            while let Some(obj) = list.next_object()? {
+                                let mut dict = obj.try_into_dictionary()?;
+                                while let Some(_pair) = dict.next_pair()? {
+                                    // TODO: Add peers to peer list
+                                }
+                            }
+                        }
+                        Either::Right(_bytes) => {
+                            // TODO: Add IPs and ports to peer list
+                        }
+                    }
+                    peers = Some(peer_list);
+                }
+                (other, _) => {
+                    return Err(decoding::Error::unexpected_field(String::from_utf8_lossy(
+                        other,
+                    )));
+                }
+            }
+        }
+
+        Ok(Response::new(
+            failure_reason,
+            warning_message,
+            interval,
+            min_interval,
+            tracker_id,
+            complete,
+            incomplete,
+            peers,
+        ))
     }
 }
