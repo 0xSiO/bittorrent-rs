@@ -30,7 +30,7 @@ impl FromBencode for Peer {
                 (b"peer id", val) => peer_id = Some(String::decode_bencode_object(val)?),
                 (b"ip", val) => {
                     // IP can be v6, v4, or a DNS name, but we'll just treat it as a String
-                    // TODO: This might fail if an ip is a bunch of random bytes
+                    // TODO: This assumes the field can be parsed as a string
                     ip = Some(String::decode_bencode_object(val)?)
                 }
                 (b"port", val) => port = Some(u16::decode_bencode_object(val)?),
@@ -51,7 +51,7 @@ impl FromBencode for Peer {
                 // a MalformedContent error requires making a failure::Error which is too much
                 // work
                 decoding::Error::unexpected_token(
-                    "an IP address",
+                    "an IP address or DNS name",
                     format!("{}:{}", ip.as_str(), port),
                 )
             })?;
@@ -60,8 +60,11 @@ impl FromBencode for Peer {
     }
 }
 
-impl From<&[u8; 6]> for Peer {
-    fn from(bytes: &[u8; 6]) -> Self {
+impl From<&[u8]> for Peer {
+    fn from(bytes: &[u8]) -> Self {
+        // TODO: I tried implementing this for &[u8; 6] and it didn't work very well, maybe use
+        // TryFrom instead and define a custom Error so it doesn't panic
+        assert!(bytes.len() == 6);
         let ip = [bytes[0], bytes[1], bytes[2], bytes[3]];
         let port = (bytes[4] as u16) * 100 + bytes[5] as u16;
         Self::new(None, SocketAddr::from((ip, port)))
@@ -76,7 +79,7 @@ mod tests {
 
     use super::*;
 
-    #[tokio::test(threaded_scheduler)]
+    #[tokio::test(core_threads = 2)]
     async fn old_conversion_test_ipv4() {
         let bencode_ipv4 = b"d2:ip9:127.0.0.17:peer id6:abcdef4:porti6080ee";
         let mut decoder = Decoder::new(bencode_ipv4);
@@ -90,7 +93,7 @@ mod tests {
         );
     }
 
-    #[tokio::test(threaded_scheduler)]
+    #[tokio::test(core_threads = 2)]
     async fn old_conversion_test_ipv6() {
         let bencode_ipv6 = b"d2:ip24:fe80::202:b3ff:fe1e:83297:peer id6:abcdef4:porti6080ee";
         let mut decoder = Decoder::new(bencode_ipv6);
@@ -104,7 +107,7 @@ mod tests {
         );
     }
 
-    #[tokio::test(threaded_scheduler)]
+    #[tokio::test(core_threads = 2)]
     async fn old_conversion_test_dns() {
         let bencode_dns = b"d2:ip11:example.com7:peer id6:abcdef4:porti80ee";
         let mut decoder = Decoder::new(bencode_dns);
@@ -124,8 +127,8 @@ mod tests {
 
     #[test]
     fn conversion_test() {
-        let bytes = [127, 0, 0, 1, 60, 80];
+        let bytes: &[u8] = &[127, 0, 0, 1, 60, 80];
         let peer = Peer::new(None, "127.0.0.1:6080".parse().unwrap());
-        assert_eq!(Peer::from(&bytes), peer);
+        assert_eq!(Peer::from(bytes), peer);
     }
 }

@@ -135,6 +135,7 @@ pub struct Response {
     tracker_id: Option<String>,
     complete: Option<u64>,
     incomplete: Option<u64>,
+    downloaded: Option<u64>,
     peers: Option<Vec<Peer>>,
 }
 
@@ -147,6 +148,7 @@ impl Response {
         tracker_id: Option<String>,
         complete: Option<u64>,
         incomplete: Option<u64>,
+        downloaded: Option<u64>,
         peers: Option<Vec<Peer>>,
     ) -> Self {
         Self {
@@ -157,6 +159,7 @@ impl Response {
             tracker_id,
             complete,
             incomplete,
+            downloaded,
             peers,
         }
     }
@@ -176,6 +179,7 @@ impl FromBencode for Response {
         let mut tracker_id = None;
         let mut complete = None;
         let mut incomplete = None;
+        let mut downloaded = None;
         let mut peers = None;
         let mut dict = object.try_into_dictionary()?;
 
@@ -192,6 +196,7 @@ impl FromBencode for Response {
                 (b"tracker id", val) => tracker_id = Some(String::decode_bencode_object(val)?),
                 (b"complete", val) => complete = Some(u64::decode_bencode_object(val)?),
                 (b"incomplete", val) => incomplete = Some(u64::decode_bencode_object(val)?),
+                (b"downloaded", val) => downloaded = Some(u64::decode_bencode_object(val)?),
                 (b"peers", val) => {
                     // Peer list is either a list of dictionaries or a byte string
                     let peers_obj: Either<ListDecoder, &[u8]> =
@@ -203,9 +208,9 @@ impl FromBencode for Response {
                                 peer_list.push(Peer::decode_bencode_object(obj)?)
                             }
                         }
-                        Either::Right(_bytes) => {
-                            // TODO: Add IPs and ports to peer list
-                        }
+                        Either::Right(bytes) => bytes
+                            .chunks(6)
+                            .for_each(|chunk| peer_list.push(Peer::from(chunk))),
                     }
                     peers = Some(peer_list);
                 }
@@ -225,6 +230,7 @@ impl FromBencode for Response {
             tracker_id,
             complete,
             incomplete,
+            downloaded,
             peers,
         ))
     }

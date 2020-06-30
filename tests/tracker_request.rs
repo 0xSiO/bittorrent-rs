@@ -1,6 +1,6 @@
 use bendy::{decoding::FromBencode, encoding::ToBencode};
 use bittorrent::{
-    tracker::{Event, Request},
+    tracker::{Event, Request, Response},
     MetaInfo,
 };
 use percent_encoding::{percent_encode, NON_ALPHANUMERIC};
@@ -36,4 +36,6 @@ async fn tracker_request() {
     );
     let response = client.get(Url::from(request)).send().await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
+    let response = Response::from_bencode(&response.bytes().await.unwrap());
+    assert!(response.is_ok());
 }
