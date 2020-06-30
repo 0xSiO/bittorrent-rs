@@ -31,6 +31,7 @@ impl Display for Event {
     }
 }
 
+// TODO: Look into request parameter named 'corrupt'
 #[derive(Debug, PartialEq, Eq)]
 pub struct Request {
     announce_url: Url,
