@@ -19,7 +19,6 @@ async fn tracker_request() {
         &info_hash.to_string(),
         "80bbb5c4986d3dd4c52f8dab517451203c4fab1d"
     );
-    let client = reqwest::Client::new();
     let request = Request::new(
         Url::parse(meta_info.announce()).unwrap(),
         percent_encode(&info_hash.bytes(), NON_ALPHANUMERIC).to_string(),
@@ -36,7 +35,7 @@ async fn tracker_request() {
         None,
         None,
     );
-    let response = client.get(Url::from(request)).send().await.unwrap();
+    let response = reqwest::get(Url::from(request)).await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     let response = Response::from_bencode(&response.bytes().await.unwrap());
     assert!(response.is_ok());
