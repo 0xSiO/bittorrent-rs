@@ -59,3 +59,73 @@ impl FromBencode for Peer {
         Ok(Self::new(peer_id, address))
     }
 }
+
+impl From<&[u8; 6]> for Peer {
+    fn from(bytes: &[u8; 6]) -> Self {
+        let ip = [bytes[0], bytes[1], bytes[2], bytes[3]];
+        let port = (bytes[4] as u16) * 100 + bytes[5] as u16;
+        Self::new(None, SocketAddr::from((ip, port)))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::net::IpAddr;
+
+    use bendy::decoding::{Decoder, FromBencode};
+
+    use super::*;
+
+    #[tokio::test(threaded_scheduler)]
+    async fn old_conversion_test_ipv4() {
+        let bencode_ipv4 = b"d2:ip9:127.0.0.17:peer id6:abcdef4:porti6080ee";
+        let mut decoder = Decoder::new(bencode_ipv4);
+        let dict = decoder.next_object().unwrap().unwrap();
+        assert_eq!(
+            Peer::decode_bencode_object(dict).unwrap(),
+            Peer::new(
+                Some(String::from("abcdef"),),
+                "127.0.0.1:6080".parse().unwrap()
+            )
+        );
+    }
+
+    #[tokio::test(threaded_scheduler)]
+    async fn old_conversion_test_ipv6() {
+        let bencode_ipv6 = b"d2:ip24:fe80::202:b3ff:fe1e:83297:peer id6:abcdef4:porti6080ee";
+        let mut decoder = Decoder::new(bencode_ipv6);
+        let dict = decoder.next_object().unwrap().unwrap();
+        assert_eq!(
+            Peer::decode_bencode_object(dict).unwrap(),
+            Peer::new(
+                Some(String::from("abcdef")),
+                SocketAddr::from(("fe80::202:b3ff:fe1e:8329".parse::<IpAddr>().unwrap(), 6080))
+            )
+        );
+    }
+
+    #[tokio::test(threaded_scheduler)]
+    async fn old_conversion_test_dns() {
+        let bencode_dns = b"d2:ip11:example.com7:peer id6:abcdef4:porti80ee";
+        let mut decoder = Decoder::new(bencode_dns);
+        let dict = decoder.next_object().unwrap().unwrap();
+        assert_eq!(
+            Peer::decode_bencode_object(dict).unwrap(),
+            Peer::new(
+                Some(String::from("abcdef")),
+                ("example.com", 80)
+                    .to_socket_addrs()
+                    .unwrap()
+                    .next()
+                    .unwrap()
+            )
+        );
+    }
+
+    #[test]
+    fn conversion_test() {
+        let bytes = [127, 0, 0, 1, 60, 80];
+        let peer = Peer::new(None, "127.0.0.1:6080".parse().unwrap());
+        assert_eq!(Peer::from(&bytes), peer);
+    }
+}
