@@ -9,6 +9,8 @@ use sha1::Sha1;
 
 #[tokio::test]
 async fn tracker_request() {
+    dotenv::dotenv().ok();
+    pretty_env_logger::init();
     let file_contents = std::fs::read("tests/fixtures/test.torrent").unwrap();
     let meta_info = MetaInfo::from_bencode(&file_contents).unwrap();
     let info = meta_info.info();

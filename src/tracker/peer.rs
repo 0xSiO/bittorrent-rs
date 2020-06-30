@@ -3,6 +3,8 @@ use std::net::{SocketAddr, ToSocketAddrs};
 use bendy::decoding::{self, FromBencode, Object};
 use tokio::task;
 
+use crate::error::Error;
+
 #[derive(Debug, PartialEq, Eq)]
 pub struct Peer {
     peer_id: Option<String>,
@@ -47,13 +49,7 @@ impl FromBencode for Peer {
         let address = task::block_in_place(|| (ip.as_str(), port).to_socket_addrs())?
             .next()
             .ok_or_else(|| {
-                // TODO: Eh, UnexpectedToken is not quite the right error, but trying to make
-                // a MalformedContent error requires making a failure::Error which is too much
-                // work
-                decoding::Error::unexpected_token(
-                    "an IP address or DNS name",
-                    format!("{}:{}", ip.as_str(), port),
-                )
+                decoding::Error::malformed_content(Error::InvalidSocketAddress(ip, port))
             })?;
 
         Ok(Self::new(peer_id, address))
