@@ -2,6 +2,7 @@ pub mod error;
 mod file_info;
 mod info;
 mod meta_info;
+pub mod scrape;
 pub mod tracker;
 
 pub use file_info::FileInfo;
