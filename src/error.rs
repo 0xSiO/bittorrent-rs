@@ -8,4 +8,6 @@ pub enum Error {
     InvalidMetadata(String),
     #[error("invalid socket address: {0}:{1}")]
     InvalidSocketAddress(String, u16),
+    #[error("invalid compact peer length: expected 6, got {0}")]
+    InvalidCompactPeerLength(usize),
 }

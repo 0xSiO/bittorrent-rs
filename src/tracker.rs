@@ -1,4 +1,5 @@
 use std::{
+    convert::TryFrom,
     fmt::{self, Display},
     net::IpAddr,
 };
@@ -208,9 +209,11 @@ impl FromBencode for Response {
                                 peer_list.push(Peer::decode_bencode_object(obj)?)
                             }
                         }
-                        Either::Right(bytes) => bytes
-                            .chunks(6)
-                            .for_each(|chunk| peer_list.push(Peer::from(chunk))),
+                        Either::Right(bytes) => {
+                            for chunk in bytes.chunks(6) {
+                                peer_list.push(Peer::try_from(chunk)?);
+                            }
+                        }
                     }
                     peers = Some(peer_list);
                 }

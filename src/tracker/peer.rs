@@ -1,4 +1,7 @@
-use std::net::{SocketAddr, ToSocketAddrs};
+use std::{
+    convert::TryFrom,
+    net::{SocketAddr, ToSocketAddrs},
+};
 
 use bendy::decoding::{self, FromBencode, Object};
 use tokio::task;
@@ -56,14 +59,17 @@ impl FromBencode for Peer {
     }
 }
 
-impl From<&[u8]> for Peer {
-    fn from(bytes: &[u8]) -> Self {
-        // TODO: I tried implementing this for &[u8; 6] and it didn't work very well, maybe use
-        // TryFrom instead and define a custom Error so it doesn't panic
-        assert!(bytes.len() == 6);
-        let ip = [bytes[0], bytes[1], bytes[2], bytes[3]];
-        let port = (bytes[4] as u16) * 100 + bytes[5] as u16;
-        Self::new(None, SocketAddr::from((ip, port)))
+impl TryFrom<&[u8]> for Peer {
+    type Error = Error;
+
+    fn try_from(bytes: &[u8]) -> crate::error::Result<Self> {
+        if bytes.len() == 6 {
+            let ip = [bytes[0], bytes[1], bytes[2], bytes[3]];
+            let port = (bytes[4] as u16) * 100 + bytes[5] as u16;
+            Ok(Self::new(None, SocketAddr::from((ip, port))))
+        } else {
+            Err(Error::InvalidCompactPeerLength(bytes.len()))
+        }
     }
 }
 
@@ -125,6 +131,6 @@ mod tests {
     fn conversion_test() {
         let bytes: &[u8] = &[127, 0, 0, 1, 60, 80];
         let peer = Peer::new(None, "127.0.0.1:6080".parse().unwrap());
-        assert_eq!(Peer::from(bytes), peer);
+        assert_eq!(Peer::try_from(bytes).unwrap(), peer);
     }
 }
