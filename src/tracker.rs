@@ -205,14 +205,11 @@ impl FromBencode for Response {
                     // Peer list is either a list of dictionaries or a byte string
                     let peers_obj: Either<ListDecoder, &[u8]> =
                         Either::from(val.bytes_or_else(|obj| Err(obj.try_into_list().unwrap())));
-                    let peer_list = Vec::new();
+                    let mut peer_list = Vec::new();
                     match peers_obj {
                         Either::Left(mut list) => {
                             while let Some(obj) = list.next_object()? {
-                                let mut dict = obj.try_into_dictionary()?;
-                                while let Some(pair) = dict.next_pair()? {
-                                    // TODO: Add peers to peer list
-                                }
+                                peer_list.push(Peer::decode_bencode_object(obj)?)
                             }
                         }
                         Either::Right(_bytes) => {
@@ -271,8 +268,17 @@ impl FromBencode for Peer {
 
         let ip: String = ip.ok_or_else(|| decoding::Error::missing_field("ip"))?;
         let port: u16 = port.ok_or_else(|| decoding::Error::missing_field("port"))?;
-        // TODO: Figure this out :(
-        let address = task::block_in_place(move || (ip.as_str(), port).to_socket_addrs())?
+        let address = task::block_in_place(|| (ip.as_str(), port).to_socket_addrs())?
+            .next()
+            .ok_or_else(|| {
+                // TODO: Eh, UnexpectedToken is not quite the right error, but trying to make
+                // a MalformedContent error requires making a failure::Error which is too much
+                // work
+                decoding::Error::unexpected_token(
+                    "an IP address",
+                    format!("{}:{}", ip.as_str(), port),
+                )
+            })?;
 
         Ok(Self::new(peer_id, address))
     }

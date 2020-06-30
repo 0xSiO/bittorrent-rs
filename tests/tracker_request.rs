@@ -35,6 +35,5 @@ async fn tracker_request() {
         None,
     );
     let response = client.get(Url::from(request)).send().await.unwrap();
-    panic!("{:#?}", response.text().await);
     assert_eq!(response.status(), StatusCode::OK);
 }
