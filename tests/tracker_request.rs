@@ -1,6 +1,6 @@
 use bendy::{decoding::FromBencode, encoding::ToBencode};
 use bittorrent::{
-    tracker::{Event, Request, Response},
+    tracker::announce::{Event, Request, Response},
     MetaInfo,
 };
 use percent_encoding::{percent_encode, NON_ALPHANUMERIC};

@@ -1,5 +1,5 @@
 use bendy::{decoding::FromBencode, encoding::ToBencode};
-use bittorrent::{scrape, MetaInfo};
+use bittorrent::{tracker::scrape::Response, MetaInfo};
 use percent_encoding::{percent_encode, NON_ALPHANUMERIC};
 use reqwest::{StatusCode, Url};
 use sha1::Sha1;
@@ -31,7 +31,7 @@ async fn tracker_scrape() {
 
     let response = reqwest::get(scrape_url).await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
-    let response = scrape::Response::from_bencode(&response.bytes().await.unwrap()).unwrap();
+    let response = Response::from_bencode(&response.bytes().await.unwrap()).unwrap();
     assert_eq!(response.files().len(), 1);
     assert!(response.files().get(&info_hash).is_some());
 }
