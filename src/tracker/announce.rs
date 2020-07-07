@@ -8,7 +8,7 @@ use bendy::decoding::{self, FromBencode, ListDecoder, Object};
 use either::Either;
 use reqwest::Url;
 
-use crate::peer::Peer;
+use crate::Peer;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Event {
