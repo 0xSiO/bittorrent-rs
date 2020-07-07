@@ -8,7 +8,7 @@ use reqwest::{StatusCode, Url};
 use sha1::Sha1;
 
 #[tokio::test]
-async fn tracker_request() {
+async fn tracker_announce() {
     dotenv::dotenv().ok();
     pretty_env_logger::init();
     let file_contents = std::fs::read("tests/fixtures/test.torrent").unwrap();
