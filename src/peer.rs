@@ -6,6 +6,8 @@ use std::{
 use bendy::decoding::{self, FromBencode, Object};
 use tokio::task;
 
+mod message;
+
 use crate::error::Error;
 
 #[derive(Debug, PartialEq, Eq)]
