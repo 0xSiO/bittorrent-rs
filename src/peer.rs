@@ -10,6 +10,8 @@ mod message;
 
 use crate::error::Error;
 
+pub use message::Message;
+
 #[derive(Debug, PartialEq, Eq)]
 pub struct Peer {
     peer_id: Option<String>,
