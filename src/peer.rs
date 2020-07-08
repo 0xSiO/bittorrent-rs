@@ -12,7 +12,7 @@ use crate::error::Error;
 
 pub use message::Message;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Peer {
     peer_id: Option<String>,
     address: SocketAddr,
@@ -21,6 +21,10 @@ pub struct Peer {
 impl Peer {
     pub fn new(peer_id: Option<String>, address: SocketAddr) -> Self {
         Self { peer_id, address }
+    }
+
+    pub fn address(&self) -> SocketAddr {
+        self.address
     }
 }
 

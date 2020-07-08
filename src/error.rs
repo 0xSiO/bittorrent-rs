@@ -10,4 +10,6 @@ pub enum Error {
     InvalidSocketAddress(String, u16),
     #[error("invalid compact peer length: expected 6, got {0}")]
     InvalidCompactPeerLength(usize),
+    #[error(transparent)]
+    IOError(#[from] std::io::Error),
 }

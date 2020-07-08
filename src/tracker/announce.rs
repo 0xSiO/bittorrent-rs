@@ -163,6 +163,10 @@ impl Response {
             peers,
         }
     }
+
+    pub fn peers(&self) -> Option<&[Peer]> {
+        self.peers.as_deref()
+    }
 }
 
 impl FromBencode for Response {
