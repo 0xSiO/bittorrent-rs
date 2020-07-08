@@ -3,7 +3,6 @@ mod file_info;
 mod info;
 mod meta_info;
 mod peer;
-pub mod peer_connection;
 pub mod tracker;
 
 pub use file_info::FileInfo;

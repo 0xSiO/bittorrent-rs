@@ -1,5 +1,5 @@
 use bendy::{decoding::FromBencode, encoding::ToBencode};
-use bittorrent::{
+use bittorrent_proto::{
     tracker::announce::{Event, Request, Response},
     MetaInfo,
 };

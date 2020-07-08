@@ -1,5 +1,5 @@
 use bendy::{decoding::FromBencode, encoding::ToBencode};
-use bittorrent::{tracker::scrape::Response, MetaInfo};
+use bittorrent_proto::{tracker::scrape::Response, MetaInfo};
 use percent_encoding::{percent_encode, NON_ALPHANUMERIC};
 use reqwest::{StatusCode, Url};
 use sha1::Sha1;

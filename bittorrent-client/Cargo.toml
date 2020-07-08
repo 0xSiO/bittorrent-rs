@@ -1,0 +1,12 @@
+[package]
+name = "bittorrent-client"
+version = "0.1.0"
+authors = ["Luc Street <lucis-fluxum@users.noreply.github.com>"]
+edition = "2018"
+publish = false
+
+[dependencies]
+bittorrent-proto = { path = "../bittorrent-proto", version = "0.1.0" }
+log = "0.4.8"
+sha1 = { version = "0.6.0", features = ["std"] }
+tokio = { version = "0.2.21", features = ["macros", "rt-threaded", "net", "io-util"] }

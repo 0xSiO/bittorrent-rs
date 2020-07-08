@@ -3,7 +3,8 @@ use tokio::{
     net::TcpStream,
 };
 
-use crate::{error::*, Peer};
+// TODO: Make a client error type
+use bittorrent_proto::{error::*, Peer};
 
 pub struct PeerConnection {
     peer: Peer,
