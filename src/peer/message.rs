@@ -6,6 +6,7 @@ pub struct Message {
     payload: Vec<u8>,
 }
 
+#[allow(dead_code)]
 #[repr(u8)]
 pub enum MessageType {
     Choke = 0,

@@ -1,15 +1,9 @@
-use std::{
-    pin::Pin,
-    task::{Context, Poll},
-};
-
-use futures_util::stream::Stream;
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt, BufStream},
     net::TcpStream,
 };
 
-use crate::{error::*, peer::Message, Peer};
+use crate::{error::*, Peer};
 
 pub struct PeerConnection {
     peer: Peer,
