@@ -17,6 +17,7 @@ pub struct PeerConnection {
 }
 
 impl PeerConnection {
+    // TODO: Peer protocol over TCP is rarely used nowadays
     pub async fn new(peer: Peer) -> Result<Self> {
         let stream = BufStream::new(TcpStream::connect(peer.address()).await?);
         Ok(Self { peer, stream })
