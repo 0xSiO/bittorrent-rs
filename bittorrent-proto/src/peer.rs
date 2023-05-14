@@ -89,7 +89,7 @@ mod tests {
 
     use super::*;
 
-    #[tokio::test(core_threads = 2)]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn old_conversion_test_ipv4() {
         let bencode_ipv4 = b"d2:ip9:127.0.0.17:peer id6:abcdef4:porti6080ee";
         let mut decoder = Decoder::new(bencode_ipv4);
@@ -103,7 +103,7 @@ mod tests {
         );
     }
 
-    #[tokio::test(core_threads = 2)]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn old_conversion_test_ipv6() {
         let bencode_ipv6 = b"d2:ip24:fe80::202:b3ff:fe1e:83297:peer id6:abcdef4:porti6080ee";
         let mut decoder = Decoder::new(bencode_ipv6);
@@ -117,7 +117,7 @@ mod tests {
         );
     }
 
-    #[tokio::test(core_threads = 2)]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn old_conversion_test_dns() {
         let bencode_dns = b"d2:ip11:example.com7:peer id6:abcdef4:porti80ee";
         let mut decoder = Decoder::new(bencode_dns);

@@ -6,6 +6,6 @@ publish = false
 
 [dependencies]
 bittorrent-proto = { path = "../bittorrent-proto", version = "0.1.0" }
-log = "0.4.8"
+log = "0.4.0"
 sha1 = { version = "0.6.0", features = ["std"] }
-tokio = { version = "0.2.21", features = ["macros", "rt-threaded", "net", "io-util"] }
+tokio = { version = "1.28.0", features = ["macros", "rt-multi-thread"] }

@@ -21,7 +21,7 @@ impl PeerConnection {
     pub async fn send_handshake(&mut self, info_hash: sha1::Digest, peer_id: &[u8]) -> Result<()> {
         self.stream.write_u8(19).await?;
         self.stream.write_all(b"BitTorrent protocol").await?;
-        self.stream.write_u64(0b00000000);
+        self.stream.write_u64(0b00000000).await?;
         self.stream.write_all(&info_hash.bytes()).await?;
         self.stream.write_all(peer_id).await?;
         self.stream.flush().await?;

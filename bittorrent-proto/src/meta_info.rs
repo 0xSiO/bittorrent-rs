@@ -180,7 +180,7 @@ mod tests {
                 ],
                 vec![String::from("http://backup.url")],
             ]),
-            Some(Utc.timestamp(1234567890, 0)),
+            Some(Utc.timestamp_opt(1234567890, 0).unwrap()),
             Some(String::from("this is a comment")),
             Some(String::from("author goes here")),
             Some(String::from("UTF-8")),
